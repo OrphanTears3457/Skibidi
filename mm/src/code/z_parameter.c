@@ -2583,8 +2583,9 @@ void Interface_UpdateButtonsPart2(PlayState* play) {
         for (i = EQUIP_SLOT_C_LEFT; i <= EQUIP_SLOT_C_RIGHT; i++) {
             if (GET_CUR_FORM_BTN_ITEM(i) != ITEM_MASK_ZORA) {
                 if (Player_GetEnvironmentalHazard(play) == PLAYER_ENV_HAZARD_UNDERWATER_FLOOR) {
-                    if (!((GET_CUR_FORM_BTN_ITEM(i) >= ITEM_BOTTLE) &&
-                          (GET_CUR_FORM_BTN_ITEM(i) <= ITEM_OBABA_DRINK))) {
+                    ItemId itemId = GET_CUR_FORM_BTN_ITEM(i);
+                    if (GameInteractor_Should(VB_ITEM_BE_RESTRICTED_UNDER_WATER, !((GET_CUR_FORM_BTN_ITEM(i) >= ITEM_BOTTLE) &&
+                          (GET_CUR_FORM_BTN_ITEM(i) <= ITEM_OBABA_DRINK)), &itemId)) {
                         if (gSaveContext.buttonStatus[i] == BTN_ENABLED) {
                             restoreHudVisibility = true;
                         }
@@ -2839,8 +2840,7 @@ void Interface_UpdateButtonsPart2(PlayState* play) {
                         if (((GET_CUR_FORM_BTN_ITEM(i) >= ITEM_MOONS_TEAR) &&
                              (GET_CUR_FORM_BTN_ITEM(i) <= ITEM_PENDANT_OF_MEMORIES)) ||
                             ((GET_CUR_FORM_BTN_ITEM(i) >= ITEM_BOTTLE) &&
-                             (GET_CUR_FORM_BTN_ITEM(i) <= ITEM_OBABA_DRINK)) ||
-                            (GET_CUR_FORM_BTN_ITEM(i) == ITEM_OCARINA_OF_TIME)) {
+                             (GET_CUR_FORM_BTN_ITEM(i) <= ITEM_OBABA_DRINK))) {
                             if (gSaveContext.buttonStatus[i] == BTN_ENABLED) {
                                 restoreHudVisibility = true;
                             }
@@ -2850,8 +2850,7 @@ void Interface_UpdateButtonsPart2(PlayState* play) {
                         if (((GET_CUR_FORM_BTN_ITEM(i) >= ITEM_MOONS_TEAR) &&
                              (GET_CUR_FORM_BTN_ITEM(i) <= ITEM_PENDANT_OF_MEMORIES)) ||
                             ((GET_CUR_FORM_BTN_ITEM(i) >= ITEM_BOTTLE) &&
-                             (GET_CUR_FORM_BTN_ITEM(i) <= ITEM_OBABA_DRINK)) ||
-                            (GET_CUR_FORM_BTN_ITEM(i) == ITEM_OCARINA_OF_TIME)) {
+                             (GET_CUR_FORM_BTN_ITEM(i) <= ITEM_OBABA_DRINK))) {
                             if (gSaveContext.buttonStatus[i] == BTN_DISABLED) {
                                 restoreHudVisibility = true;
                             }
