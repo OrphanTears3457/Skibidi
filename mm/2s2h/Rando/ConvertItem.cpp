@@ -113,6 +113,8 @@ bool Rando::IsItemObtainable(RandoItemId randoItemId, RandoCheckId randoCheckId)
     switch (randoItemId) {
         case RI_UNKNOWN:
             return false;
+        case RI_TRAP:
+            return true;
         case RI_PROGRESSIVE_WALLET:
             if (hasObtainedCheck) {
                 return false;

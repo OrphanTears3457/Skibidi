@@ -466,6 +466,12 @@ void ProcessEvents(Actor* actor) {
                         e->params);
         }
         GameInteractor::Instance->currentEvent = GIEventNone{};
+    } else if (auto e = std::get_if<GIEventTrap>(&nextEvent)) {
+        SPDLOG_INFO("ProcessEvents");
+        if (e->trapType == 0)  {
+            // 
+        }
+        GameInteractor::Instance->currentEvent = GIEventNone{};
     }
 
     GameInteractor::Instance->events.erase(GameInteractor::Instance->events.begin());

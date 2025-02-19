@@ -261,6 +261,14 @@ void Rando::GiveItem(RandoItemId randoItemId) {
         case RI_JUNK:
         case RI_NONE:
             break;
+        case RI_TRAP:
+            GameInteractor::Instance->events.emplace_back(GIEventTransition{
+                .entrance = ENTRANCE(TERMINA_FIELD, 12),
+                .cutsceneIndex = 0,
+                .transitionTrigger = TRANS_TRIGGER_START,
+                .transitionType = TRANS_TYPE_FADE_BLACK,
+            });
+            break;
         default:
             Item_Give(gPlayState, Rando::StaticData::Items[randoItemId].itemId);
             break;
