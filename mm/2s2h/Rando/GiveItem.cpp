@@ -1,5 +1,6 @@
 #include "Rando/Rando.h"
 #include "Rando/MiscBehavior/MiscBehavior.h"
+#include "2s2h/Network/Anchor/Anchor.h"
 
 extern "C" {
 #include "variables.h"
@@ -119,6 +120,8 @@ void Rando::GiveItem(RandoItemId randoItemId) {
                                        .cutsceneIndex = 0xFFF7,
                                        .transitionTrigger = TRANS_TRIGGER_START,
                                        .transitionType = TRANS_TYPE_FADE_BLACK });
+                Anchor::Instance->SendPacket_GameComplete();
+                Anchor::Instance->ReleaseWorldForCurrentTeam();
             }
             break;
         // Technically these should never be used, but leaving them here just in case

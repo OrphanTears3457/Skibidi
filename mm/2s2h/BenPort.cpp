@@ -41,6 +41,7 @@
 #include "2s2h/Enhancements/FrameInterpolation/FrameInterpolation.h"
 
 #include "2s2h/Network/Sail/Sail.h"
+#include "2s2h/Network/Anchor/Anchor.h"
 
 #include <libultraship/libultraship.h>
 #include <libultraship/controller/controldeck/ControlDeck.h>
@@ -111,6 +112,7 @@ OTRGlobals* OTRGlobals::Instance;
 GameInteractor* GameInteractor::Instance;
 AudioCollection* AudioCollection::Instance;
 Sail* Sail::Instance;
+Anchor* Anchor::Instance;
 
 extern "C" char** cameraStrings;
 bool prevAltAssets = false;
@@ -703,6 +705,8 @@ extern "C" void InitOTR() {
     GameInteractor::Instance = new GameInteractor();
     AudioCollection::Instance = new AudioCollection();
     Sail::Instance = new Sail();
+    Anchor::Instance = new Anchor();
+
     LoadGuiTextures();
     BenGui::SetupGuiElements();
     ShipInit::InitAll();
@@ -738,6 +742,9 @@ extern "C" void InitOTR() {
     if (CVarGetInteger("gNetwork.Sail.Enabled", 0)) {
         Sail::Instance->Enable();
     }
+    if (CVarGetInteger("gNetwork.Anchor.Enabled", 0)) {
+        Anchor::Instance->Enable();
+    }
 
     std::shared_ptr<Ship::Config> conf = OTRGlobals::Instance->context->GetConfig();
     Ship::Context::GetInstance()->GetFileDropMgr()->RegisterDropHandler(BinarySaveConverter_HandleFileDropped);
@@ -753,6 +760,9 @@ extern "C" void DeinitOTR() {
     OTRAudio_Exit();
     if (CVarGetInteger("gNetwork.Sail.Enabled", 0)) {
         Sail::Instance->Disable();
+    }
+    if (CVarGetInteger("gNetwork.Anchor.Enabled", 0)) {
+        Anchor::Instance->Disable();
     }
 #ifdef ENABLE_NETWORKING
     SDLNet_Quit();
