@@ -4,6 +4,7 @@
 #include <libultraship/bridge/consolevariablebridge.h>
 #include "2s2h/CustomItem/CustomItem.h"
 #include "2s2h/CustomMessage/CustomMessage.h"
+#include "2s2h/Chaos/Chaos.h"
 
 extern "C" {
 #include "z64actor.h"
@@ -376,11 +377,9 @@ int GameInteractor_InvertControl(GIInvertType type) {
         }
     }
 
-    /*
-    if (CrowdControl::State::InvertedInputs) {
+    if (Chaos::controlsInverted) {
         result *= -1;
     }
-    */
 
     return result;
 }
@@ -432,6 +431,11 @@ uint32_t GameInteractor_RightStickOcarina(Input* input) {
 
 void ProcessEvents(Actor* actor) {
     Player* player = GET_PLAYER(gPlayState);
+
+    // Player on title screen
+    if (gSaveContext.gameMode != GAMEMODE_NORMAL) {
+        return;
+    }
 
     // If the player has a message active, stop
     if (gPlayState->msgCtx.msgMode != 0) {
@@ -534,6 +538,7 @@ void ProcessEvents(Actor* actor) {
         GameInteractor::Instance->currentEvent = GIEventNone{};
     }
 
+    // Erase the event that just ran, if it failed it will have been re-queued.
     GameInteractor::Instance->events.erase(GameInteractor::Instance->events.begin());
 }
 

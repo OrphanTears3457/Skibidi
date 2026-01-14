@@ -911,36 +911,36 @@ typedef enum PlayerCueId {
 } PlayerCueId;
 
 
-// 
+// PLAYER_STATE1_LOADING ?
 #define PLAYER_STATE1_1          (1 << 0)
-// 
+// PLAYER_STATE1_SWINGING_BOTTLE ?
 #define PLAYER_STATE1_2          (1 << 1)
 // Climbing ledge
 #define PLAYER_STATE1_4          (1 << 2)
-// 
+// PLAYER_STATE1_ITEM_IN_HAND ?
 #define PLAYER_STATE1_8          (1 << 3)
 // Zora electric shield
 #define PLAYER_STATE1_10         (1 << 4)
-// 
+// PLAYER_STATE1_INPUT_DISABLED ?
 #define PLAYER_STATE1_20         (1 << 5)
 // Currently talking to an actor. This includes item exchanges.
 #define PLAYER_STATE1_TALKING (1 << 6)
 // Player has died. Note that this gets set when the death cutscene has started, after landing from the air.
 // This also gets set when either deku/zora forms touches lava floor, or goron form enters water and the scene resets.
 #define PLAYER_STATE1_DEAD         (1 << 7)
-// 
+// PLAYER_STATE1_START_CHANGING_HELD_ITEM ?
 #define PLAYER_STATE1_100        (1 << 8)
-// 
+// PLAYER_STATE1_READY_TO_FIRE ?
 #define PLAYER_STATE1_200        (1 << 9)
-// 
+// PLAYER_STATE1_GETTING_ITEM ?
 #define PLAYER_STATE1_400        (1 << 10)
 // Currently carrying an actor
 #define PLAYER_STATE1_CARRYING_ACTOR (1 << 11)
 // Currently charging a spin attack (by holding down the B button)
 #define PLAYER_STATE1_CHARGING_SPIN_ATTACK (1 << 12)
-// 
+// PLAYER_STATE1_HANGING_OFF_LEDGE ?
 #define PLAYER_STATE1_2000       (1 << 13)
-// 
+// PLAYER_STATE1_CLIMBING_LEDGE ?
 #define PLAYER_STATE1_4000       (1 << 14)
 // Either lock-on or parallel is active. This flag is never checked for and is practically unused.
 #define PLAYER_STATE1_Z_TARGETING       (1 << 15)
@@ -948,27 +948,27 @@ typedef enum PlayerCueId {
 #define PLAYER_STATE1_FRIENDLY_ACTOR_FOCUS      (1 << 16)
 // "Parallel" mode, Z-Target without an actor lock-on
 #define PLAYER_STATE1_PARALLEL   (1 << 17)
-// 
+// PLAYER_STATE1_JUMPING ?
 #define PLAYER_STATE1_40000      (1 << 18)
-// 
+// PLAYER_STATE1_FREEFALL ?
 #define PLAYER_STATE1_80000      (1 << 19)
-// 
+// PLAYER_STATE1_FIRST_PERSON ?
 #define PLAYER_STATE1_100000     (1 << 20)
-// 
+// PLAYER_STATE1_CLIMBING_LADDER ?
 #define PLAYER_STATE1_200000     (1 << 21)
-// 
+// PLAYER_STATE1_SHIELDING ?
 #define PLAYER_STATE1_400000     (1 << 22)
-// 
+// PLAYER_STATE1_ON_HORSE ?
 #define PLAYER_STATE1_800000     (1 << 23)
 // Currently using the zora boomerang. This includes all phases (aiming, throwing, and catching).
 #define PLAYER_STATE1_USING_ZORA_BOOMERANG (1 << 24)
 // Zora boomerang has been thrown and is flying in the air
 #define PLAYER_STATE1_ZORA_BOOMERANG_THROWN (1 << 25)
-// 
+// PLAYER_STATE1_DAMAGED ?
 #define PLAYER_STATE1_4000000    (1 << 26)
 // Swimming?
 #define PLAYER_STATE1_8000000    (1 << 27)
-// 
+// PLAYER_STATE1_IN_ITEM_CS ?
 #define PLAYER_STATE1_10000000   (1 << 28)
 // Time is stopped but Link & NPC animations continue
 #define PLAYER_STATE1_20000000   (1 << 29)
