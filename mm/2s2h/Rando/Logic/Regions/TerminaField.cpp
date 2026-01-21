@@ -511,6 +511,8 @@ static RegisterShipInitFunc initFunc([]() {
             CHECK(RC_ENEMY_DROP_EENO, CanKillEnemy(ACTOR_EN_SNOWMAN) && IS_NIGHT()), // Night only
             CHECK(RC_ENEMY_DROP_BAD_BAT, CanKillEnemy(ACTOR_EN_BAT)),
             CHECK(RC_ENEMY_DROP_TAKKURI, CanKillEnemy(ACTOR_EN_THIEFBIRD)),
+            CHECK(RC_TERMINA_FIELD_BUTTERFLY_01, true),
+            CHECK(RC_TERMINA_FIELD_BUTTERFLY_02, true),
         },
         .exits = { //     TO                                         FROM
             EXIT(ENTRANCE(GROTTOS, 0),                      ENTRANCE(TERMINA_FIELD, 0), CAN_USE_EXPLOSIVE || CAN_BE_GORON), // TODO: Grotto mapping Gossip Stone #3
