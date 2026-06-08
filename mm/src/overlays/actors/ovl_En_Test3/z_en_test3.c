@@ -866,7 +866,7 @@ s32 func_80A3FE20(EnTest3* this, PlayState* play) {
     ScheduleOutput scheduleOutput;
 
     if (D_80A41D64 == 0) {
-        if (GameInteractor_Should(VB_KAFEI_RUN_TO_TOWN, func_80A3E9DC(this, play))) {
+        if (func_80A3E9DC(this, play)) {
             sp2C.unk_1_0 = 2;
             scheduleOutput.time0 = (u16)SCRIPT_TIME_NOW;
             scheduleOutput.time1 = (u16)(scheduleOutput.time0 + 1000);
@@ -912,7 +912,8 @@ s32 func_80A3FFD0(EnTest3* this, PlayState* play2) {
     PlayState* play = play2;
 
     if (D_80A41D68 == 0) {
-        if (!Play_InCsMode(play) && (play->roomCtx.curRoom.num == 2)) {
+        if (GameInteractor_Should(VB_PLAY_COUPLES_MASK_CS, !Play_InCsMode(play) && (play->roomCtx.curRoom.num == 2),
+                                  this, &D_80A41D68)) {
             D_80A41D68 = 1;
         }
     } else if (D_80A41D68 == 1) {

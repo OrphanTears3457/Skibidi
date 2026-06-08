@@ -1,4 +1,5 @@
 #include "BenMenu.h"
+#include "BenGui.hpp"
 #include "UIWidgets.hpp"
 #include "BenPort.h"
 #include "BenInputEditorWindow.h"
@@ -9,6 +10,7 @@
 #include "2s2h/PresetManager/PresetManager.h"
 #include "HudEditor.h"
 #include "Notification.h"
+#include "2s2h/Enhancements/Trackers/DisplayOverlay.h"
 #include <variant>
 #include <ship/utils/StringHelper.h>
 #include <spdlog/fmt/fmt.h>
@@ -28,6 +30,13 @@ extern SaveContext gSaveContext;
 }
 extern std::unordered_map<s16, const char*> warpPointSceneList;
 extern void Warp();
+
+static std::unordered_map<int32_t, const char*> imguiScaleOptions = {
+    { 0, "Small" },
+    { 1, "Normal" },
+    { 2, "Large" },
+    { 3, "X-Large" },
+};
 
 static const std::unordered_map<int32_t, const char*> menuThemeOptions = {
     { UIWidgets::Colors::Red, "Red" },
@@ -377,6 +386,16 @@ void BenMenu::AddSettings() {
         })
         .Options(ButtonOptions().Tooltip("Opens the folder that contains the save and mods folders, etc."));
 
+    AddWidget(path, "ImGui Menu Scaling", WIDGET_CVAR_COMBOBOX)
+        .CVar("gSettings.ImGuiScale")
+        .Options(ComboboxOptions()
+                     .ComboMap(&imguiScaleOptions)
+                     .Tooltip("Changes the scaling of the ImGui menu elements.")
+                     .DefaultIndex(1)
+                     .ComponentAlignment(UIWidgets::Right)
+                     .LabelPosition(UIWidgets::Far))
+        .Callback([](WidgetInfo& info) { OTRGlobals::Instance->ScaleImGui(); });
+
     path.column = SECTION_COLUMN_2;
     AddWidget(path, "about", WIDGET_CUSTOM).CustomFunction([](WidgetInfo& info) {
         ImGui::BeginChild("about");
@@ -645,8 +664,12 @@ void BenMenu::AddSettings() {
     path.column = SECTION_COLUMN_2;
     AddWidget(path, "In-Game Timer", WIDGET_SEPARATOR_TEXT);
     AddWidget(path, "Display", WIDGET_CVAR_COMBOBOX)
-        .CVar("gWindows.DisplayOverlay")
+        .CVar(CVAR_DISPLAY_OVERLAY_MODE)
         .WindowName("Display Overlay")
+        .Callback([](WidgetInfo& info) {
+            int mode = CVarGetInteger(CVAR_DISPLAY_OVERLAY_MODE, TIMER_DISPLAY_NONE);
+            SetDisplayOverlayVisibility(mode != TIMER_DISPLAY_NONE);
+        })
         .Options(
             ComboboxOptions()
                 .Tooltip(
@@ -688,6 +711,17 @@ void BenMenu::AddSettings() {
         .CVar("gWindows.InputViewerSettings")
         .WindowName("Input Viewer Settings")
         .Options(ButtonOptions().Tooltip("Enables the separate Input Viewer Settings Window."));
+
+    // Mod Menu
+    path.sidebarName = "Mod Menu";
+    path.column = SECTION_COLUMN_1;
+    AddSidebarEntry("Settings", path.sidebarName, 2);
+    AddWidget(path, "Mod Menu", WIDGET_SEPARATOR_TEXT);
+    AddWidget(path, "Popout Mod Menu Window", WIDGET_WINDOW_BUTTON)
+        .CVar("gWindows.ModMenu")
+        .WindowName("Mod Menu")
+        .HideInSearch(true)
+        .Options(ButtonOptions().Tooltip("Enables the separate Mod Menu Window."));
 }
 int32_t motionBlurStrength;
 
@@ -924,6 +958,9 @@ void BenMenu::AddEnhancements() {
         .CVar("gCheats.InfiniteConsumables")
         .Options(
             CheckboxOptions().Tooltip("Always have max Consumables, you must have collected the consumables first."));
+    AddWidget(path, "Infinite Epona Carrots", WIDGET_CVAR_CHECKBOX)
+        .CVar("gCheats.InfiniteEponaCarrots")
+        .Options(CheckboxOptions().Tooltip("Allows Epona to boost without consuming carrots."));
     AddWidget(path, "Easy Frame Advance", WIDGET_CVAR_CHECKBOX)
         .CVar("gCheats.EasyFrameAdvance")
         .Options(CheckboxOptions().Tooltip(
@@ -1048,6 +1085,10 @@ void BenMenu::AddEnhancements() {
         .CVar("gEnhancements.PlayerActions.ArrowCycle")
         .Options(CheckboxOptions().Tooltip(
             "While aiming the bow, use R to cycle between Normal, Fire, Ice and Light arrows."));
+    AddWidget(path, "Bomb Arrows", WIDGET_CVAR_CHECKBOX)
+        .CVar("gEnhancements.Equipment.BombArrows")
+        .Options(CheckboxOptions().Tooltip(
+            "Allows equipping Bomb Arrows by equipping Bombs onto a bow button in the pause menu."));
     AddWidget(path, "Remote Bombchu Control", WIDGET_CVAR_CHECKBOX)
         .CVar("gEnhancements.PlayerActions.RemoteBombchu")
         .Options(CheckboxOptions().Tooltip(
@@ -1124,6 +1165,12 @@ void BenMenu::AddEnhancements() {
         .CVar("gEnhancements.Items.ExtraPowderKegs")
         .Options(CheckboxOptions().Tooltip(
             "Allows carrying up to 3 Powder Kegs at once instead of the vanilla limit of 1."));
+    AddWidget(path, "Extended Projectile Interaction Distance", WIDGET_CVAR_CHECKBOX)
+        .CVar("gEnhancements.Gameplay.ExtendedProjectileInteractionDistance")
+        .Options(CheckboxOptions().Tooltip(
+            "Allows projectiles and explosions to hit breakable objects at a distance matching your "
+            "Increase Actor Draw Distance setting.\n\n"
+            "Does not affect pickup ranges, talk prompts, or physical body collision."));
     AddWidget(path, "Curiosity Shop Refills", WIDGET_CVAR_CHECKBOX)
         .CVar("gEnhancements.Shops.CuriosityShopRefills")
         .Options(CheckboxOptions().Tooltip(
@@ -1205,6 +1252,9 @@ void BenMenu::AddEnhancements() {
         .CVar("gEnhancements.Cycle.DoNotResetChateau")
         .Options(CheckboxOptions().Tooltip(
             "Playing the Song of Time will not reset the infinite magic status granted by Chateau Romani."));
+    AddWidget(path, "Do not reset Scarecrow's Song", WIDGET_CVAR_CHECKBOX)
+        .CVar("gEnhancements.Cycle.DoNotResetScarecrowSong")
+        .Options(CheckboxOptions().Tooltip("Playing the Song of Time will not reset the Scarecrow's Song."));
     AddWidget(path, "Keep Express Mail", WIDGET_CVAR_CHECKBOX)
         .CVar("gEnhancements.Cycle.KeepExpressMail")
         .Options(CheckboxOptions().Tooltip(
@@ -1218,6 +1268,9 @@ void BenMenu::AddEnhancements() {
     AddWidget(path, "Oceanside wallet any day", WIDGET_CVAR_CHECKBOX)
         .CVar("gEnhancements.Cycle.OceansideWalletAnyDay")
         .Options(CheckboxOptions().Tooltip("Allows the wallet reward to be collected on any day."));
+    AddWidget(path, "Tingle Always in Clock Town", WIDGET_CVAR_CHECKBOX)
+        .CVar("gEnhancements.Cycle.TingleAlwaysInClockTown")
+        .Options(CheckboxOptions().Tooltip("Tingle will always appear in North Clock Town, not just during the day."));
 
     //// Graphics Enhancements
     path = { "Enhancements", "Graphics", SECTION_COLUMN_1 };
@@ -1426,6 +1479,13 @@ void BenMenu::AddEnhancements() {
         .CVar("gEnhancements.Songs.SkipSoaringCutscene")
         .Options(CheckboxOptions().Tooltip("Skips the cutscene when using the Song of Soaring to warp."));
 
+    // Item Enhancements
+    path.column = SECTION_COLUMN_3;
+    AddWidget(path, "Items", WIDGET_SEPARATOR_TEXT);
+    AddWidget(path, "Color Pictograph", WIDGET_CVAR_CHECKBOX)
+        .CVar("gEnhancements.Items.ColorPictograph")
+        .Options(CheckboxOptions().Tooltip("Will take and display pictographs in color."));
+
     // Time Savers
     path = { "Enhancements", "Time Savers", SECTION_COLUMN_1 };
     AddSidebarEntry("Enhancements", "Time Savers", 3);
@@ -1444,7 +1504,8 @@ void BenMenu::AddEnhancements() {
     AddWidget(path, "Skip to File Select", WIDGET_CVAR_CHECKBOX)
         .CVar("gEnhancements.Cutscenes.SkipToFileSelect")
         .Options(CheckboxOptions().Tooltip(
-            "Skip the opening title sequence and go straight to the file select menu after boot."));
+            "Skip the opening title sequence and go straight to the file select menu after boot.\n\n"
+            "Note: Takes priority over debug warp points with [Boot] enabled."));
     AddWidget(path, "Skip Intro Sequence", WIDGET_CVAR_CHECKBOX)
         .CVar("gEnhancements.Cutscenes.SkipIntroSequence")
         .Options(CheckboxOptions().Tooltip(
