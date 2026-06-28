@@ -1,13 +1,14 @@
-#include <libultraship/bridge.h>
+#include <libultraship/bridge/consolevariablebridge.h>
 #include "2s2h/GameInteractor/GameInteractor.h"
+#include "2s2h/ShipInit.hpp"
 #include "CameraUtils.h"
 #ifdef __ANDROID__
 #include "port/mobile/MobileImpl.h"
 #endif
 
 extern "C" {
-#include <macros.h>
-#include <functions.h>
+#include "macros.h"
+#include "functions.h"
 extern PlayState* gPlayState;
 extern PlayState* sCamPlayState;
 extern f32 Camera_ScaledStepToCeilF(f32 target, f32 cur, f32 stepScale, f32 minDiff);
@@ -18,6 +19,9 @@ extern void func_800CBFA4(Camera* camera, Vec3f* arg1, Vec3f* arg2, s32 arg3);
 extern CameraSetting sCameraSettings[];
 extern s32 sCameraInterfaceFlags;
 }
+
+// Check if bombchu remote control is active
+extern bool IsBombchuFocused();
 
 // Static Data Used For Free Camera
 static bool sCanFreeLook = false;
@@ -133,9 +137,19 @@ bool Camera_FreeLook(Camera* camera) {
     *eyeNext = OLib_AddVecGeoToVec3f(at, &eyeAdjustment);
     // Apply new camera angle only when camera active
     if (camera->status == CAM_STATUS_ACTIVE) {
-        *eye = *eyeNext;
-        // Adjust camera for collision with floors, walls and ceilings.
-        func_800CBFA4(camera, at, eye, 0);
+        CameraCollision camCollision = {};
+        camCollision.pos = *eyeNext;
+
+        if (Camera_BgCheckInfo(camera, at, &camCollision)) {
+            f32 collDist = Math3D_Vec3f_DistXYZ(at, &camCollision.pos);
+            eyeAdjustment.r = collDist - 3.0f;
+            *eye = OLib_AddVecGeoToVec3f(at, &eyeAdjustment);
+        } else {
+            *eye = *eyeNext;
+        }
+
+        camera->dist = Math3D_Vec3f_DistXYZ(at, eye);
+        camera->eyeNext = *eye;
     }
 
     // 65.0f based on value from SoH
@@ -167,50 +181,39 @@ bool Camera_CanFreeLook(Camera* camera) {
     if (gPlayState != nullptr && Player_InCsMode(gPlayState)) {
         sCanFreeLook = false;
     }
+    // Disable freecam during bombchu control
+    if (IsBombchuFocused()) {
+        sCanFreeLook = false;
+    }
 
     return sCanFreeLook;
 }
 
-static HOOK_ID freeLookCameraSettingChangeHookId = 0;
-static HOOK_ID freeLookCameraVBHookId = 0;
-
 void RegisterCameraFreeLook() {
-    if (freeLookCameraVBHookId) {
-        GameInteractor::Instance->UnregisterGameHookForID<GameInteractor::ShouldVanillaBehavior>(
-            freeLookCameraVBHookId);
-        freeLookCameraVBHookId = 0;
-    }
+    COND_VB_SHOULD(VB_USE_CUSTOM_CAMERA, CVarGetInteger("gEnhancements.Camera.FreeLook.Enable", 0), {
+        Camera* camera = va_arg(args, Camera*);
+        switch (sCameraSettings[camera->setting].cameraModes[camera->mode].funcId) {
+            case CAM_FUNC_NORMAL0:
+            case CAM_FUNC_NORMAL1:
+            case CAM_FUNC_NORMAL3:
+            case CAM_FUNC_NORMAL4:
+            case CAM_FUNC_JUMP2:
+            case CAM_FUNC_JUMP3:
+            case CAM_FUNC_BATTLE1:
+            case CAM_FUNC_UNIQUE2:
+            case CAM_FUNC_UNIQUE3:
+                if (Camera_CanFreeLook(camera)) {
+                    Camera_FreeLook(camera);
+                    *should = false;
+                }
+                break;
+            default:
+                break;
+        }
+    });
 
-    if (freeLookCameraSettingChangeHookId) {
-        GameInteractor::Instance->UnregisterGameHook<GameInteractor::OnCameraChangeModeFlags>(
-            freeLookCameraSettingChangeHookId);
-        freeLookCameraSettingChangeHookId = 0;
-    }
-
-    if (CVarGetInteger("gEnhancements.Camera.FreeLook.Enable", 0)) {
-        freeLookCameraVBHookId = REGISTER_VB_SHOULD(VB_USE_CUSTOM_CAMERA, {
-            Camera* camera = va_arg(args, Camera*);
-            switch (sCameraSettings[camera->setting].cameraModes[camera->mode].funcId) {
-                case CAM_FUNC_NORMAL0:
-                case CAM_FUNC_NORMAL1:
-                case CAM_FUNC_NORMAL3:
-                case CAM_FUNC_NORMAL4:
-                case CAM_FUNC_JUMP2:
-                case CAM_FUNC_JUMP3:
-                case CAM_FUNC_BATTLE1:
-                case CAM_FUNC_UNIQUE2:
-                case CAM_FUNC_UNIQUE3:
-                    if (Camera_CanFreeLook(camera)) {
-                        Camera_FreeLook(camera);
-                        *should = false;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        });
-        freeLookCameraSettingChangeHookId =
-            GameInteractor::Instance->RegisterGameHook<GameInteractor::OnCameraChangeModeFlags>(
-                [](Camera* camera) { UpdateFreeLookState(camera); });
-    }
+    COND_HOOK(OnCameraChangeModeFlags, CVarGetInteger("gEnhancements.Camera.FreeLook.Enable", 0),
+              [](Camera* camera) { UpdateFreeLookState(camera); });
 }
+
+static RegisterShipInitFunc initFunc(RegisterCameraFreeLook, { "gEnhancements.Camera.FreeLook.Enable" });

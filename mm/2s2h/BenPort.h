@@ -3,6 +3,19 @@
 
 #pragma once
 
+#define BTN_CUSTOM_MODIFIER1 0x0040
+#define BTN_CUSTOM_MODIFIER2 0x0080
+
+// Ocarina custom controls (using bits beyond standard 16-bit N64 buttons)
+#define BTN_CUSTOM_OCARINA_NOTE_D4 ((CONTROLLERBUTTONS_T)0x00010000)
+#define BTN_CUSTOM_OCARINA_NOTE_F4 ((CONTROLLERBUTTONS_T)0x00020000)
+#define BTN_CUSTOM_OCARINA_NOTE_A4 ((CONTROLLERBUTTONS_T)0x00040000)
+#define BTN_CUSTOM_OCARINA_NOTE_B4 ((CONTROLLERBUTTONS_T)0x00080000)
+#define BTN_CUSTOM_OCARINA_NOTE_D5 ((CONTROLLERBUTTONS_T)0x00100000)
+#define BTN_CUSTOM_OCARINA_DISABLE_SONGS ((CONTROLLERBUTTONS_T)0x00200000)
+#define BTN_CUSTOM_OCARINA_PITCH_UP ((CONTROLLERBUTTONS_T)0x00400000)
+#define BTN_CUSTOM_OCARINA_PITCH_DOWN ((CONTROLLERBUTTONS_T)0x00800000)
+
 #define GAME_REGION_NTSC 0
 #define GAME_REGION_PAL 1
 
@@ -13,9 +26,11 @@
 #define MM_NTSC_US_GC 0xB443EB08
 
 #ifdef __cplusplus
-#include <Context.h>
+#include <ship/Context.h>
 
 #include <vector>
+
+struct ImFont;
 
 const std::string customMessageTableID = "BaseGameOverrides";
 const std::string appShortName = "2ship";
@@ -48,9 +63,11 @@ uint32_t IsGameMasterQuest();
 #endif
 
 #ifndef __cplusplus
+#include <z64audio.h>
 #include <z64bgcheck.h>
 #include <z64camera.h>
 #include <z64game.h>
+#include <z64keyframe.h>
 #include <z64scene.h>
 #include <z64skin.h>
 void InitOTR(void);
@@ -91,6 +108,8 @@ Gfx* ResourceMgr_LoadGfxByCRC(uint64_t crc);
 Gfx* ResourceMgr_LoadGfxByName(const char* path);
 void ResourceMgr_PatchGfxByName(const char* path, const char* patchName, int index, Gfx instruction);
 void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName);
+size_t ResourceMgr_GetPatchCountForDL(const char* path);
+void ResourceMgr_ResetAllPatchesForDL(const char* path);
 u8* ResourceMgr_LoadArrayByNameAsU8(const char* path, u8* buffer);
 char* ResourceMgr_LoadArrayByNameAsVec3s(const char* path);
 char* ResourceMgr_LoadArrayByName(const char* path);
@@ -99,8 +118,8 @@ Vtx* ResourceMgr_LoadVtxByCRC(uint64_t crc);
 char* ResourceMgr_LoadVtxArrayByName(const char* path);
 size_t ResourceMgr_GetVtxArraySizeByName(const char* path);
 Vtx* ResourceMgr_LoadVtxByName(char* path);
+SequenceData* ResourceMgr_LoadSeqPtrByName(const char* path);
 Mtx* ResourceMgr_LoadMtxByName(char* path);
-
 KeyFrameSkeleton* ResourceMgr_LoadKeyFrameSkelByName(const char* path);
 KeyFrameAnimation* ResourceMgr_LoadKeyFrameAnimByName(const char* path);
 
@@ -137,11 +156,15 @@ void Controller_UnblockGameInput();
 void Overlay_DisplayText(float duration, const char* text);
 void Overlay_DisplayText_Seconds(int seconds, const char* text);
 uint32_t Ship_GetInterpolationFPS();
+uint32_t Ship_GetInterpolationFrameCount();
 
 void Gfx_RegisterBlendedTexture(const char* name, u8* mask, u8* replacement);
 void Gfx_UnregisterBlendedTexture(const char* name);
 void Gfx_TextureCacheDelete(const uint8_t* texAddr);
 void CheckTracker_OnMessageClose();
+
+void Messagebox_ShowErrorBox(char* title, char* body);
+bool Ship_HandleConsoleCrashAsReset();
 
 int32_t GetGIID(uint32_t itemID);
 #endif
@@ -150,6 +173,7 @@ int32_t GetGIID(uint32_t itemID);
 extern "C" {
 #endif
 uint64_t GetUnixTimestamp();
+void CrashHandler_PrintExt(char* buffer, size_t* pos);
 #ifdef __cplusplus
 };
 #endif

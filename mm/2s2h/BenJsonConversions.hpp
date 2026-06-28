@@ -1,38 +1,162 @@
 #ifndef BenJsonConversions_hpp
 #define BenJsonConversions_hpp
 
-#include "z64.h"
+#include <libultraship/libultraship.h>
 #include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
+#include "build.h"
+
+extern "C" {
+#include "z64save.h"
+#include "macros.h"
+#include "z64actor.h"
+}
 
 using json = nlohmann::json;
 
-void to_json(json& j, const DpadSaveInfo& dpadEquips) {
+inline void to_json(json& j, const DpadSaveInfo& dpadEquips) {
     j = json{
         { "dpadItems", dpadEquips.dpadItems },
         { "dpadSlots", dpadEquips.dpadSlots },
     };
 }
 
-void from_json(const json& j, DpadSaveInfo& dpadEquips) {
+inline void from_json(const json& j, DpadSaveInfo& dpadEquips) {
     for (int i = 0; i < ARRAY_COUNT(dpadEquips.dpadItems); i++) {
         j.at("dpadItems").at(i).get_to(dpadEquips.dpadItems[i]);
         j.at("dpadSlots").at(i).get_to(dpadEquips.dpadSlots[i]);
     }
 }
 
-void to_json(json& j, const ShipSaveInfo& shipSaveInfo) {
-    j = json {
-        { "dpadEquips", shipSaveInfo.dpadEquips },
-        { "pauseSaveEntrance", shipSaveInfo.pauseSaveEntrance },
+inline void to_json(json& j, const RandoSaveCheck& randoSaveCheck) {
+    j = json{
+        { "randoItemId", randoSaveCheck.randoItemId },
+        { "eligible", randoSaveCheck.eligible },
+        { "cycleObtained", randoSaveCheck.cycleObtained },
+        { "obtained", randoSaveCheck.obtained },
+        { "shuffled", randoSaveCheck.shuffled },
+        { "skipped", randoSaveCheck.skipped },
+        { "price", randoSaveCheck.price },
+        { "multiWorldTeamIndex", randoSaveCheck.multiWorldTeamIndex },
     };
 }
 
-void from_json(const json& j, ShipSaveInfo& shipSaveInfo) {
-    j.at("dpadEquips").get_to(shipSaveInfo.dpadEquips);
-    j.at("pauseSaveEntrance").get_to(shipSaveInfo.pauseSaveEntrance);
+inline void from_json(const json& j, RandoSaveCheck& randoSaveCheck) {
+    j.at("randoItemId").get_to(randoSaveCheck.randoItemId);
+    j.at("eligible").get_to(randoSaveCheck.eligible);
+    j.at("cycleObtained").get_to(randoSaveCheck.cycleObtained);
+    j.at("obtained").get_to(randoSaveCheck.obtained);
+    j.at("shuffled").get_to(randoSaveCheck.shuffled);
+    j.at("skipped").get_to(randoSaveCheck.skipped);
+    j.at("price").get_to(randoSaveCheck.price);
+    j.at("multiWorldTeamIndex").get_to(randoSaveCheck.multiWorldTeamIndex);
 }
 
-void to_json(json& j, const ItemEquips& itemEquips) {
+inline void to_json(json& j, const RandoSaveInfo& rando) {
+    j = json{
+        { "randoInf", rando.randoInf },
+        { "randoEvents", rando.randoEvents },
+        { "randoSaveChecks", rando.randoSaveChecks },
+        { "finalSeed", rando.finalSeed },
+        { "randoSaveOptions", rando.randoSaveOptions },
+        { "randoStartingItems", rando.randoStartingItems },
+        { "foundDungeonKeys", rando.foundDungeonKeys },
+        { "foundTriforcePieces", rando.foundTriforcePieces },
+    };
+}
+
+inline void from_json(const json& j, RandoSaveInfo& rando) {
+    j.at("randoInf").get_to(rando.randoInf);
+    j.at("randoEvents").get_to(rando.randoEvents);
+    j.at("randoSaveChecks").get_to(rando.randoSaveChecks);
+    j.at("finalSeed").get_to(rando.finalSeed);
+    j.at("randoSaveOptions").get_to(rando.randoSaveOptions);
+    j.at("randoStartingItems").get_to(rando.randoStartingItems);
+    j.at("foundDungeonKeys").get_to(rando.foundDungeonKeys);
+    j.at("foundTriforcePieces").get_to(rando.foundTriforcePieces);
+}
+
+inline void to_json(json& j, const Vec3f& vec) {
+    j = json{
+        { "x", vec.x },
+        { "y", vec.y },
+        { "z", vec.z },
+    };
+}
+
+inline void from_json(const json& j, Vec3f& vec) {
+    j.at("x").get_to(vec.x);
+    j.at("y").get_to(vec.y);
+    j.at("z").get_to(vec.z);
+}
+
+inline void to_json(json& j, const RespawnData& respawnData) {
+    j = json{
+        { "pos", respawnData.pos },
+        { "yaw", respawnData.yaw },
+        { "playerParams", respawnData.playerParams },
+        { "entrance", respawnData.entrance },
+        { "roomIndex", respawnData.roomIndex },
+        { "data", respawnData.data },
+        { "tempSwitchFlags", respawnData.tempSwitchFlags },
+        { "unk_18", respawnData.unk_18 },
+        { "tempCollectFlags", respawnData.tempCollectFlags },
+    };
+}
+
+inline void from_json(const json& j, RespawnData& respawnData) {
+    j.at("pos").get_to(respawnData.pos);
+    j.at("yaw").get_to(respawnData.yaw);
+    j.at("playerParams").get_to(respawnData.playerParams);
+    j.at("entrance").get_to(respawnData.entrance);
+    j.at("roomIndex").get_to(respawnData.roomIndex);
+    j.at("data").get_to(respawnData.data);
+    j.at("tempSwitchFlags").get_to(respawnData.tempSwitchFlags);
+    j.at("unk_18").get_to(respawnData.unk_18);
+    j.at("tempCollectFlags").get_to(respawnData.tempCollectFlags);
+}
+
+inline void to_json(json& j, const ShipSaveInfo& shipSaveInfo) {
+    uint8_t commitHash[8];
+    memcpy(commitHash, shipSaveInfo.commitHash, sizeof(commitHash));
+
+    j = json{
+        { "dpadEquips", shipSaveInfo.dpadEquips },
+        { "pauseSaveEntrance", shipSaveInfo.pauseSaveEntrance },
+        { "saveType", shipSaveInfo.saveType },
+        { "fileCreatedAt", shipSaveInfo.fileCreatedAt },
+        { "fileCompletedAt", shipSaveInfo.fileCompletedAt },
+        { "filePlaytime", shipSaveInfo.filePlaytime },
+        { "respawn", shipSaveInfo.respawn },
+        { "commitHash", commitHash },
+    };
+
+    if (shipSaveInfo.saveType == SAVETYPE_RANDO) {
+        j["rando"] = shipSaveInfo.rando;
+    }
+}
+
+inline void from_json(const json& j, ShipSaveInfo& shipSaveInfo) {
+    j.at("dpadEquips").get_to(shipSaveInfo.dpadEquips);
+    j.at("pauseSaveEntrance").get_to(shipSaveInfo.pauseSaveEntrance);
+    j.at("saveType").get_to(shipSaveInfo.saveType);
+    j.at("fileCreatedAt").get_to(shipSaveInfo.fileCreatedAt);
+    j.at("fileCompletedAt").get_to(shipSaveInfo.fileCompletedAt);
+    j.at("filePlaytime").get_to(shipSaveInfo.filePlaytime);
+    j.at("respawn").get_to(shipSaveInfo.respawn);
+    j.at("commitHash").get_to(shipSaveInfo.commitHash);
+
+    if (shipSaveInfo.saveType == SAVETYPE_RANDO) {
+        if (strcmp(shipSaveInfo.commitHash, gGitCommitHash) != 0) {
+            SPDLOG_ERROR("Randomizer saves cannot be loaded from a different version.");
+            throw new std::runtime_error("Randomizer saves cannot be loaded from a different version.");
+        }
+
+        j.at("rando").get_to(shipSaveInfo.rando);
+    }
+}
+
+inline void to_json(json& j, const ItemEquips& itemEquips) {
     j = json{
         { "buttonItems", itemEquips.buttonItems },
         { "cButtonSlots", itemEquips.cButtonSlots },
@@ -40,7 +164,7 @@ void to_json(json& j, const ItemEquips& itemEquips) {
     };
 }
 
-void from_json(const json& j, ItemEquips& itemEquips) {
+inline void from_json(const json& j, ItemEquips& itemEquips) {
     j.at("equipment").get_to(itemEquips.equipment);
     // buttonItems and cButtonSlots are arrays of arrays, so we need to manually parse them
     for (int i = 0; i < ARRAY_COUNT(itemEquips.buttonItems); i++) {
@@ -49,7 +173,7 @@ void from_json(const json& j, ItemEquips& itemEquips) {
     }
 }
 
-void to_json(json& j, const Inventory& inventory) {
+inline void to_json(json& j, const Inventory& inventory) {
     // Setup and copy u8 arrays to avoid json treating char[] as strings
     // These char[] are not null-terminated, so saving as strings causes overflow/corruption
     uint8_t dekuPlaygroundPlayerName[3][8];
@@ -68,7 +192,7 @@ void to_json(json& j, const Inventory& inventory) {
     };
 }
 
-void from_json(const json& j, Inventory& inventory) {
+inline void from_json(const json& j, Inventory& inventory) {
     j.at("items").get_to(inventory.items);
     j.at("ammo").get_to(inventory.ammo);
     j.at("upgrades").get_to(inventory.upgrades);
@@ -83,7 +207,7 @@ void from_json(const json& j, Inventory& inventory) {
     }
 }
 
-void to_json(json& j, const PermanentSceneFlags& permanentSceneFlags) {
+inline void to_json(json& j, const PermanentSceneFlags& permanentSceneFlags) {
     j = json{
         { "chest", permanentSceneFlags.chest },
         { "switch0", permanentSceneFlags.switch0 },
@@ -95,7 +219,7 @@ void to_json(json& j, const PermanentSceneFlags& permanentSceneFlags) {
     };
 }
 
-void from_json(const json& j, PermanentSceneFlags& permanentSceneFlags) {
+inline void from_json(const json& j, PermanentSceneFlags& permanentSceneFlags) {
     j.at("chest").get_to(permanentSceneFlags.chest);
     j.at("switch0").get_to(permanentSceneFlags.switch0);
     j.at("switch1").get_to(permanentSceneFlags.switch1);
@@ -105,7 +229,7 @@ void from_json(const json& j, PermanentSceneFlags& permanentSceneFlags) {
     j.at("rooms").get_to(permanentSceneFlags.rooms);
 }
 
-void to_json(json& j, const SavePlayerData& savePlayerData) {
+inline void to_json(json& j, const SavePlayerData& savePlayerData) {
     // Setup and copy u8 arrays to avoid json treating char[] as strings
     // These char[] are not null-terminated, so saving as strings causes overflow/corruption
     u8 newf[6];
@@ -128,14 +252,14 @@ void to_json(json& j, const SavePlayerData& savePlayerData) {
         { "isDoubleMagicAcquired", savePlayerData.isDoubleMagicAcquired },
         { "doubleDefense", savePlayerData.doubleDefense },
         { "unk_1F", savePlayerData.unk_1F },
-        { "unk_20", savePlayerData.unk_20 },
+        { "unk_20", savePlayerData.owlWarpId }, // TODO: Migrate save to use the new name?
         { "owlActivationFlags", savePlayerData.owlActivationFlags },
         { "unk_24", savePlayerData.unk_24 },
         { "savedSceneId", savePlayerData.savedSceneId },
     };
 }
 
-void from_json(const json& j, SavePlayerData& savePlayerData) {
+inline void from_json(const json& j, SavePlayerData& savePlayerData) {
     j.at("newf").get_to(savePlayerData.newf);
     j.at("threeDayResetCount").get_to(savePlayerData.threeDayResetCount);
     j.at("playerName").get_to(savePlayerData.playerName);
@@ -150,13 +274,27 @@ void from_json(const json& j, SavePlayerData& savePlayerData) {
     j.at("isDoubleMagicAcquired").get_to(savePlayerData.isDoubleMagicAcquired);
     j.at("doubleDefense").get_to(savePlayerData.doubleDefense);
     j.at("unk_1F").get_to(savePlayerData.unk_1F);
-    j.at("unk_20").get_to(savePlayerData.unk_20);
+    j.at("unk_20").get_to(savePlayerData.owlWarpId); // TODO: Migrate save to use the new name?
     j.at("owlActivationFlags").get_to(savePlayerData.owlActivationFlags);
     j.at("unk_24").get_to(savePlayerData.unk_24);
     j.at("savedSceneId").get_to(savePlayerData.savedSceneId);
 }
 
-void to_json(json& j, const Vec3s& vec) {
+inline void from_json(const json& j, Color_RGB8& color) {
+    j.at("r").get_to(color.r);
+    j.at("g").get_to(color.g);
+    j.at("b").get_to(color.b);
+}
+
+inline void to_json(json& j, const Color_RGB8& color) {
+    j = json{
+        {"r", color.r},
+        {"g", color.g},
+        {"b", color.b}
+    };
+}
+
+inline void to_json(json& j, const Vec3s& vec) {
     j = json{
         { "x", vec.x },
         { "y", vec.y },
@@ -164,13 +302,25 @@ void to_json(json& j, const Vec3s& vec) {
     };
 }
 
-void from_json(const json& j, Vec3s& vec) {
+inline void from_json(const json& j, Vec3s& vec) {
     j.at("x").get_to(vec.x);
     j.at("y").get_to(vec.y);
     j.at("z").get_to(vec.z);
 }
 
-void to_json(json& j, const HorseData& horseData) {
+inline void to_json(json& j, const PosRot& posRot) {
+    j = json{
+        {"pos", posRot.pos},
+        {"rot", posRot.rot}
+    };
+}
+
+inline void from_json(const json& j, PosRot& posRot) {
+    j.at("pos").get_to(posRot.pos);
+    j.at("rot").get_to(posRot.rot);
+}
+
+inline void to_json(json& j, const HorseData& horseData) {
     j = json{
         { "sceneId", horseData.sceneId },
         { "pos", horseData.pos },
@@ -178,13 +328,13 @@ void to_json(json& j, const HorseData& horseData) {
     };
 }
 
-void from_json(const json& j, HorseData& horseData) {
+inline void from_json(const json& j, HorseData& horseData) {
     j.at("sceneId").get_to(horseData.sceneId);
     j.at("pos").get_to(horseData.pos);
     j.at("yaw").get_to(horseData.yaw);
 }
 
-void to_json(json& j, const SaveInfo& saveInfo) {
+inline void to_json(json& j, const SaveInfo& saveInfo) {
     j = json{
         { "playerData", saveInfo.playerData },
         { "equips", saveInfo.equips },
@@ -196,7 +346,7 @@ void to_json(json& j, const SaveInfo& saveInfo) {
         { "pictoFlags1", saveInfo.pictoFlags1 },
         { "unk_E5C", saveInfo.unk_E5C },
         { "unk_E60", saveInfo.unk_E60 },
-        { "unk_E64", saveInfo.unk_E64 },
+        { "unk_E64", saveInfo.alienInfo }, // TODO: Add migration to rename this?
         { "scenesVisible", saveInfo.scenesVisible },
         { "skullTokenCount", saveInfo.skullTokenCount },
         { "unk_EA0", saveInfo.unk_EA0 },
@@ -221,7 +371,7 @@ void to_json(json& j, const SaveInfo& saveInfo) {
     };
 }
 
-void from_json(const json& j, SaveInfo& saveInfo) {
+inline void from_json(const json& j, SaveInfo& saveInfo) {
     j.at("playerData").get_to(saveInfo.playerData);
     j.at("equips").get_to(saveInfo.equips);
     j.at("inventory").get_to(saveInfo.inventory);
@@ -232,7 +382,7 @@ void from_json(const json& j, SaveInfo& saveInfo) {
     j.at("pictoFlags1").get_to(saveInfo.pictoFlags1);
     j.at("unk_E5C").get_to(saveInfo.unk_E5C);
     j.at("unk_E60").get_to(saveInfo.unk_E60);
-    j.at("unk_E64").get_to(saveInfo.unk_E64);
+    j.at("unk_E64").get_to(saveInfo.alienInfo); // TODO: Add migration to rename this?
     j.at("scenesVisible").get_to(saveInfo.scenesVisible);
     j.at("skullTokenCount").get_to(saveInfo.skullTokenCount);
     j.at("unk_EA0").get_to(saveInfo.unk_EA0);
@@ -259,7 +409,7 @@ void from_json(const json& j, SaveInfo& saveInfo) {
     j.at("checksum").get_to(saveInfo.checksum);
 }
 
-void to_json(json& j, const Save& save) {
+inline void to_json(json& j, const Save& save) {
     j = json{
         { "entrance", save.entrance },
         { "equippedMask", save.equippedMask },
@@ -268,7 +418,7 @@ void to_json(json& j, const Save& save) {
         { "linkAge", save.linkAge },
         { "cutsceneIndex", save.cutsceneIndex },
         { "time", save.time },
-        { "owlSaveLocation", save.owlSaveLocation },
+        { "owlSaveLocation", save.owlWarpId }, // TODO: Migrate save to use the new name?
         { "isNight", save.isNight },
         { "timeSpeedOffset", save.timeSpeedOffset },
         { "day", save.day },
@@ -282,7 +432,7 @@ void to_json(json& j, const Save& save) {
     };
 }
 
-void from_json(const json& j, Save& save) {
+inline void from_json(const json& j, Save& save) {
     j.at("entrance").get_to(save.entrance);
     j.at("equippedMask").get_to(save.equippedMask);
     j.at("isFirstCycle").get_to(save.isFirstCycle);
@@ -290,7 +440,7 @@ void from_json(const json& j, Save& save) {
     j.at("linkAge").get_to(save.linkAge);
     j.at("cutsceneIndex").get_to(save.cutsceneIndex);
     j.at("time").get_to(save.time);
-    j.at("owlSaveLocation").get_to(save.owlSaveLocation);
+    j.at("owlSaveLocation").get_to(save.owlWarpId); // TODO: Migrate save to use the new name?
     j.at("isNight").get_to(save.isNight);
     j.at("timeSpeedOffset").get_to(save.timeSpeedOffset);
     j.at("day").get_to(save.day);
@@ -303,7 +453,7 @@ void from_json(const json& j, Save& save) {
     j.at("shipSaveInfo").get_to(save.shipSaveInfo);
 }
 
-void to_json(json& j, const SaveContext& saveContext) {
+inline void to_json(json& j, const SaveContext& saveContext) {
     j = json{
         { "save", saveContext.save },
         { "eventInf", saveContext.eventInf },
@@ -320,7 +470,7 @@ void to_json(json& j, const SaveContext& saveContext) {
     };
 }
 
-void from_json(const json& j, SaveContext& saveContext) {
+inline void from_json(const json& j, SaveContext& saveContext) {
     j.at("save").get_to(saveContext.save);
     j.at("eventInf").get_to(saveContext.eventInf);
     j.at("unk_1014").get_to(saveContext.unk_1014);
@@ -335,7 +485,7 @@ void from_json(const json& j, SaveContext& saveContext) {
     j.at("pictoPhotoI5").get_to(saveContext.pictoPhotoI5);
 }
 
-void to_json(json& j, const SaveOptions& saveOptions) {
+inline void to_json(json& j, const SaveOptions& saveOptions) {
     j = json{
         { "optionId", saveOptions.optionId },
         { "language", saveOptions.language },
@@ -345,7 +495,7 @@ void to_json(json& j, const SaveOptions& saveOptions) {
     };
 }
 
-void from_json(const json& j, SaveOptions& saveOptions) {
+inline void from_json(const json& j, SaveOptions& saveOptions) {
     j.at("optionId").get_to(saveOptions.optionId);
     j.at("language").get_to(saveOptions.language);
     j.at("audioSetting").get_to(saveOptions.audioSetting);
